@@ -1,19 +1,36 @@
 import asyncio
+import aiofiles
+import datetime
 from asyncio import StreamReader, StreamWriter
 
 
+HOST = 'minechat.dvmn.org'
+PORT = 5000
 LOG_FILE = "chat_history.log"
 
 
+async def log_message(message: str, log_file: str = LOG_FILE):
+    """Асинхронно записывает сообщение в файл с временной меткой"""
+    timestamp = datetime.datetime.now().strftime("[%d.%m.%y %H:%M]")
+    log_entry = f"{timestamp} {message}\n"
+    
+    async with aiofiles.open(log_file, mode='a', encoding='utf-8') as f:
+        await f.write(log_entry)
+        await f.flush()
+
+
 async def chat_client(host: str, port: int):
-    reader: StreamReader
-    writer: StreamWriter
-    reader, writer = await asyncio.open_connection(host, port)
+    """Основная функция клиента чата"""
+    reconnect_delay = 1
     
-    print(f"Подключились к чату {host}:{port}")
-    
-    with open(LOG_FILE, 'a', encoding='utf-8') as log_file:
+    while True:
         try:
+            reader, writer = await asyncio.open_connection(host, port)
+            print(f"Подключились к чату {host}:{port}")
+            await log_message("Установлено соединение")
+            
+            reconnect_delay = 1
+            
             while True:
                 data = await reader.readline()
                 
@@ -22,29 +39,41 @@ async def chat_client(host: str, port: int):
                 
                 message = data.decode().strip()
                 
-                print(message)
-                
-                log_file.write(message + '\n')
-                log_file.flush()
-                
+                if message:
+                    print(message)
+                    await log_message(message)
+                    
+        except (ConnectionError, asyncio.TimeoutError) as e:
+            error_msg = f"Ошибка соединения: {e}. Переподключение через {reconnect_delay} сек..."
+            print(error_msg)
+            await log_message(f"Разрыв соединения: {e}")
+            await asyncio.sleep(reconnect_delay)
+
+            reconnect_delay = min(reconnect_delay * 2, 60)
+            
         except Exception as e:
-            print(f"Произошла ошибка: {e}")
+            error_msg = f"Неожиданная ошибка: {e}"
+            print(error_msg)
+            await log_message(error_msg)
+            await asyncio.sleep(5)
+            
         finally:
-            writer.close()
-            await writer.wait_closed()
-            print("Соединение закрыто")
+            if 'writer' in locals():
+                writer.close()
+                await writer.wait_closed()
 
 
 async def main():
-    host = 'minechat.dvmn.org'
-    port = 5000
+    """Главная функция"""
+    print(f"Запуск мониторинга чата {HOST}:{PORT}")
+    print(f"История сохраняется в файл: {LOG_FILE}")
+    print("Для остановки нажмите Ctrl+C\n")
     
     try:
-        await chat_client(host, port)
+        await chat_client(HOST, PORT)
     except KeyboardInterrupt:
-        print("\nВыход по запросу пользователя")
-    except Exception as e:
-        print(f"Не удалось подключиться: {e}")
+        print("\nМониторинг остановлен по запросу пользователя")
+        await log_message("Мониторинг остановлен")
 
 
 if __name__ == '__main__':
