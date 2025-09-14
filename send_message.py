@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from asyncio import StreamWriter, StreamReader
 
 
-
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -18,10 +17,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger('sender')
 
+
 load_dotenv()
 
 
-async def send_message(host: str, port: int, account_hash: str = None, message: str = None):
+async def send_message(host, port, account_hash, message):
     """Подключается к серверу, аутентифицируется и отправляет сообщение"""
     reader: StreamReader = None
     writer: StreamWriter = None
@@ -52,6 +52,13 @@ async def send_message(host: str, port: int, account_hash: str = None, message: 
         logger.debug(f"Получены данные аккаунта: {account_text}")
 
         account_info = json.loads(account_text)
+
+        if account_info is None:
+            error_msg = "Неизвестный токен. Проверьте его или зарегистрируйте заново."
+            logger.error(error_msg)
+            print(f"❌ {error_msg}")
+            raise ValueError(error_msg)
+
         logger.info(f"Аккаунт: {account_info['nickname']} (хеш: {account_info['account_hash']})")
         print(f"Аккаунт: {account_info['nickname']} (хеш: {account_info['account_hash']})")
 
@@ -75,6 +82,8 @@ async def send_message(host: str, port: int, account_hash: str = None, message: 
     except json.JSONDecodeError as e:
         logger.error(f"Ошибка парсинга JSON: {e}")
         logger.error(f"Полученные данные: {account_text if 'account_text' in locals() else 'N/A'}")
+        raise
+    except ValueError as e:
         raise
     except Exception as e:
         logger.error(f"Ошибка: {e}")
@@ -152,6 +161,11 @@ async def main():
         logger.info(f"Успешно завершено. Ник: {account_info['nickname']}")
         print(f"\n✅ Успешно! Ваш ник: {account_info['nickname']}")
 
+    except ValueError as e:
+        logger.error(f"Ошибка аутентификации: {e}")
+        print(f"\n❌ {e}")
+        print("Попробуйте создать новый аккаунт без указания хеша:")
+        print("python3 send_message.py --message \"Ваше сообщение\"")
     except KeyboardInterrupt:
         logger.warning("Отменено пользователем")
         print("\n❌ Отменено пользователем")
