@@ -29,7 +29,7 @@ async def main():
         try:
             with open('chat_account.hash', 'r', encoding='utf-8') as f:
                 default_hash = f.read().strip()
-        except as e:
+        except Exception as e:
             logger.debug(f'Не удалось прочитать файл с токеном: {e}')
 
     parser.add_argument('--host', '-H', default=default_host, help='Адрес сервера чата')
