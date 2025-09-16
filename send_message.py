@@ -107,6 +107,14 @@ def parse_args():
     default_port = os.environ['MESSAGE_CHAT_PORT']
     default_hash = os.environ['CHAT_HASH']
 
+    if default_hash is None and os.path.exists('chat_account.hash'):
+        try:
+            with open('chat_account.hash', 'r', encoding='utf-8') as f:
+                default_hash = f.read().strip()
+            logger.debug(f"Токен загружен из файла: {default_hash}")
+        except Exception as e:
+            logger.warning(f"Не удалось прочитать токен из файла: {e}")
+
     parser.add_argument('--host', '-H',
                        default=default_host,
                        help='Адрес сервера чата')
@@ -136,7 +144,6 @@ def parse_args():
 
 
 async def main():
-    """Главная функция"""
     args = parse_args()
 
     logger.setLevel(args.log_level.upper())
