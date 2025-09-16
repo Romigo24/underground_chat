@@ -95,3 +95,18 @@ python3 send_message.py --hash хэш-аккаунта --message 'Я снова 
 ```bash
 python3 send_message.py --save-hash
 ```
+
+### Регистрация аккаунта 
+Простая регистрация с импользованием рандомного никнейма:
+```bash
+python3 registration.py
+```
+
+Регистрация с указанием никнейма:
+```bash 
+python registration.py --nickname 'ваш_никнейм'
+```
+Токен автоматически сохраняется в chat_account.hash, и можем отправлять сообщения в чат:
+```bash
+python send_message.py --message 'Всем привет! Я новый пользователь.'
+```
