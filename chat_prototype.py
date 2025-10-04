@@ -162,7 +162,6 @@ async def send_msgs_with_ping(host, port, account_hash, sending_queue, save_queu
                     try:
                         writer.write(f"{message}\n\n".encode())
                         await writer.drain()
-                        print(f"👤 Пользователь написал: {message}")
                         user_message = f"> {message}"
                         await save_queue.put(user_message)
                         logger.info(f"📤 Сообщение отправлено на сервер: '{message}'")
