@@ -135,9 +135,8 @@ async def read_msgs(host, port, messages_queue, save_queue, status_updates_queue
         await watchdog_queue.put(f"Read error: {e}")
         raise
     finally:
-        if 'writer' in locals():
-            writer.close()
-            await writer.wait_closed()
+        writer.close()
+        await writer.wait_closed()
 
 
 async def send_msgs_with_ping(host, port, account_hash, sending_queue, save_queue, status_updates_queue, watchdog_queue):
@@ -187,9 +186,8 @@ async def send_msgs_with_ping(host, port, account_hash, sending_queue, save_queu
         await watchdog_queue.put(f"Sending error: {e}")
         raise
     finally:
-        if 'writer' in locals():
-            writer.close()
-            await writer.wait_closed()
+        writer.close()
+        await writer.wait_closed()
 
 
 @reconnect(max_retries=10, initial_delay=1, max_delay=60)
